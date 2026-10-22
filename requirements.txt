@@ -1,0 +1,6 @@
+# Python packages imported by this project.
+# jetson_inference and jetson_utils are JetPack/jetson-inference system
+# bindings and must be installed for the Jetson's Python environment; they are
+# intentionally not listed as PyPI dependencies here.
+numpy>=1.19,<2
+donkeycar==4.5.1
