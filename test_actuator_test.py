@@ -1,5 +1,7 @@
 """Hardware-free tests for actuator_test.py."""
 
+import contextlib
+import io
 import unittest
 
 from actuator_test import parse_args, steering_pulse, test_plan, throttle_pulse
@@ -53,8 +55,56 @@ class PulseMathTest(unittest.TestCase):
         self.assertEqual(plan['pin'], 'PCA9685.1:40.1')
         self.assertEqual(plan['pulse'], 380)
         self.assertEqual(plan['safe_pulse'], 370)
-        with self.assertRaises(ValueError):
-            test_plan(parse_args(['throttle', '--pulse', '48']), SETTINGS)
+        for pulse in ('48', '401'):
+            with self.subTest(pulse=pulse), self.assertRaises(ValueError):
+                test_plan(parse_args(['throttle', '--pulse', pulse]), SETTINGS)
+        for pulse in ('370', '400'):
+            with self.subTest(pulse=pulse):
+                plan = test_plan(parse_args(['throttle', '--pulse', pulse]), SETTINGS)
+                self.assertEqual(plan['pulse'], int(pulse))
+
+    def test_throttle_rejects_invalid_cli_calibration_overrides(self):
+        for mode in (['--pulse', '385'], ['--speed', '0.1']):
+            for option in ('--neutral-pwm', '--start-pwm', '--forward-pwm'):
+                for value in ('-1', '0', '4095', 'nan', 'inf', '-inf'):
+                    with self.subTest(mode=mode, option=option, value=value):
+                        with contextlib.redirect_stderr(io.StringIO()):
+                            with self.assertRaises(SystemExit) as error:
+                                parse_args(['throttle'] + mode + [option + '=' + value])
+                        self.assertEqual(error.exception.code, 2)
+
+    def test_throttle_rejects_invalid_loaded_calibration(self):
+        for mode in (['--pulse', '385'], ['--speed', '0.1']):
+            args = parse_args(['throttle'] + mode)
+            for key in ('THROTTLE_STOPPED_PWM', 'THROTTLE_FORWARD_START_PWM',
+                        'THROTTLE_FORWARD_PWM'):
+                for value in (-1, 0, 4095, float('nan'), float('inf')):
+                    with self.subTest(mode=mode, key=key, value=value):
+                        settings = dict(SETTINGS)
+                        settings[key] = value
+                        with self.assertRaises(ValueError):
+                            test_plan(args, settings)
+
+    def test_throttle_rejects_inconsistent_calibration_overrides(self):
+        for mode in (['--pulse', '385'], ['--speed', '0.1']):
+            for overrides in (['--neutral-pwm', '380'],
+                              ['--start-pwm', '370'],
+                              ['--forward-pwm', '375']):
+                with self.subTest(mode=mode, overrides=overrides):
+                    args = parse_args(['throttle'] + mode + overrides)
+                    with self.assertRaises(ValueError):
+                        test_plan(args, SETTINGS)
+
+    def test_throttle_accepts_valid_calibration_overrides(self):
+        for mode, expected in ((['--pulse', '405'], 405),
+                               (['--speed', '0.3'], 410)):
+            with self.subTest(mode=mode):
+                args = parse_args(['throttle'] + mode + [
+                    '--neutral-pwm', '360', '--start-pwm', '380',
+                    '--forward-pwm', '410'])
+                plan = test_plan(args, SETTINGS)
+                self.assertEqual(plan['pulse'], expected)
+                self.assertEqual(plan['safe_pulse'], 360)
 
 
 if __name__ == '__main__':

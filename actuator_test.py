@@ -27,13 +27,18 @@ def steering_pulse(value, left_pwm, center_pwm, right_pwm):
     return int(center_pwm + abs(value) * (endpoint - center_pwm))
 
 
-def throttle_pulse(speed, neutral_pwm, forward_start_pwm, forward_pwm):
-    finite_in_range(speed, 0.0, 0.3, 'throttle speed')
+def validate_throttle_calibration(neutral_pwm, forward_start_pwm, forward_pwm):
+    """Validate calibration shared by raw-pulse and normalized-speed tests."""
     finite_in_range(neutral_pwm, 1, 4094, 'neutral PWM')
     finite_in_range(forward_start_pwm, 1, 4094, 'forward-start PWM')
     finite_in_range(forward_pwm, 1, 4094, 'forward PWM')
     if not neutral_pwm < forward_start_pwm <= forward_pwm:
         raise ValueError('expected neutral < forward-start <= forward PWM')
+
+
+def throttle_pulse(speed, neutral_pwm, forward_start_pwm, forward_pwm):
+    finite_in_range(speed, 0.0, 0.3, 'throttle speed')
+    validate_throttle_calibration(neutral_pwm, forward_start_pwm, forward_pwm)
     if speed == 0:
         return int(neutral_pwm)
     return int(forward_start_pwm + speed / 0.3 * (forward_pwm - forward_start_pwm))
@@ -89,14 +94,14 @@ def parse_args(argv=None):
         if args.command == 'steering':
             finite_in_range(args.value, -1.0, 1.0, 'steering value')
         else:
+            for value, name in ((args.neutral_pwm, 'neutral PWM'),
+                                (args.start_pwm, 'forward-start PWM'),
+                                (args.forward_pwm, 'forward PWM')):
+                if value is not None:
+                    finite_in_range(value, 1, 4094, name)
             if args.pulse is not None:
                 finite_in_range(args.pulse, 1, 4094, 'pulse')
             else:
-                for value, name in ((args.neutral_pwm, 'neutral PWM'),
-                                    (args.start_pwm, 'forward-start PWM'),
-                                    (args.forward_pwm, 'forward PWM')):
-                    if value is not None:
-                        finite_in_range(value, 1, 4094, name)
                 finite_in_range(args.arm_seconds, 0.0, 5.0, 'arm-seconds')
     except ValueError as error:
         parser.error(str(error))
@@ -142,6 +147,7 @@ def test_plan(args, settings):
     forward = (args.forward_pwm if args.forward_pwm is not None
                else settings['THROTTLE_FORWARD_PWM'])
     if args.pulse is not None:
+        validate_throttle_calibration(neutral, forward_start, forward)
         finite_in_range(args.pulse, neutral, forward, 'raw throttle pulse')
         pulse = int(args.pulse)
         safe_pulse = int(neutral)

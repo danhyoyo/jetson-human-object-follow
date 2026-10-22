@@ -7,7 +7,7 @@
 [![Framework](https://img.shields.io/badge/Framework-DonkeyCar%204.5.1-orange?style=for-the-badge)](https://www.donkeycar.com/)
 [![Inference](https://img.shields.io/badge/AI%20Engine-TensorRT%20%7C%20SSD--MobileNet--v2-blue?style=for-the-badge)](https://github.com/dusty-nv/jetson-inference)
 [![Python](https://img.shields.io/badge/Python-3.6+-yellow?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Unit%20Tests-20%20Passed-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](test_follow_control.py)
+[![Tests](https://img.shields.io/badge/Unit%20Tests-24%20Passed-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](test_follow_control.py)
 
 **A production-ready, safety-guarded autonomous target-following system for Jetson Nano-powered DonkeyCar / JetCar.**
 
@@ -60,7 +60,7 @@ Safety and hardware protection are designed as core principles: **preview mode n
   - Reverse lock: Throttle is clamped strictly to the safe forward range `[370, 400]`.
   - ESC deadband skipping: Positive commands smoothly map between `380` and `400` PWM pulses.
 - **Hardware-Free Simulation & Dry-Run**:
-  - 20 comprehensive unit tests that run on any x86/ARM desktop without camera or PCA9685 hardware connected.
+  - 24 comprehensive unit tests that run on any x86/ARM desktop without camera or PCA9685 hardware connected.
   - `actuator_test.py` defaults to dry-run mode to verify math before applying signals.
 - **Self-Contained & Offline**:
   - Portable pre-compiled UFF model and labels are bundled directly within the repository.
@@ -166,7 +166,7 @@ cd jetson-human-object-follow
 ```
 
 ### 3. Run Automated Setup & Verification
-Run the bundled verification script to validate model assets, verify imports, execute all 20 unit tests, and perform actuator dry-runs:
+Run the bundled verification script to validate model assets, verify imports, execute all 24 unit tests, and perform actuator dry-runs:
 ```bash
 bash setup_jetson.sh
 ```
@@ -264,7 +264,7 @@ python3 actuator_test.py --apply --duration 1 throttle --speed 0.05
 All algorithms can be verified on any machine without Jetson hardware:
 
 ```bash
-# Run all 20 unit tests with verbose output
+# Run all 24 unit tests with verbose output
 python3 -m unittest -v test_follow_control.py test_actuator_test.py
 ```
 
@@ -282,13 +282,13 @@ python3 -m unittest -v test_follow_control.py test_actuator_test.py
 |---|---|---|---|
 | `--drive` | `False` | Flag | Enable steering and forward throttle. Requires `--speed`. |
 | `--steering-test`| `False` | Flag | Enable steering servo only; throttle stays at neutral. |
-| `--speed` | `None` | `0.0 .. 0.3` | Normalized forward speed (`0.08` = crawl, `0.30` = safe cap PWM 400). |
+| `--speed` | `0.12` (Preview)<br/>`0.0` (Steering test)<br/>Explicit value (Drive) | `0.0 .. 0.3` | Normalized forward speed; must be positive with `--drive` and zero with `--steering-test` (`0.08` = crawl, `0.30` = safe cap PWM 400). |
 | `--red-object` | `False` | Flag | Switch from AI person detector to NumPy red object tracker. |
-| `--red-min-area` | `0.002` | `0.0 .. 0.25` | Minimum fraction of image area required to trigger red detection. |
-| `--target-height`| `0.55` (Person)<br/>`0.50` (Red) | `0.1 .. 0.9` | Fraction of frame height at which vehicle stops forward motion. |
+| `--red-min-area` | `0.002` | `0.0 < value <= 0.25` | Minimum fraction of image area required to trigger red detection. |
+| `--target-height`| `0.55` (Person)<br/>`0.50` (Red) | `0.2 .. 0.85` | Fraction of frame height at which vehicle stops forward motion. |
 | `--ignore-distance` | `False` | Flag | Bench-test mode: follow target regardless of distance/edge stops. |
-| `--steering-gain`| `1.0` | `> 0.0` | Proportional multiplier for horizontal centering error. |
-| `--steering-limit`| `0.70` | `0.0 .. 1.0` | Maximum allowable normalized steering deflection. |
+| `--steering-gain`| `1.0` | `0.0 < value <= 2.0` | Proportional multiplier for horizontal centering error. |
+| `--steering-limit`| `0.70` | `0.0 < value <= 1.0` | Maximum allowable normalized steering deflection. |
 | `--invert-steering`| `False` | Flag | Reverse steering sign if mechanical linkage is inverted. |
 | `--camera` | `csi://0` | URI | Camera input URI (`csi://0`, `/dev/video0`). |
 | `--no-software-rotate`| `False` | Flag | Disable the 180° software image rotation. |
