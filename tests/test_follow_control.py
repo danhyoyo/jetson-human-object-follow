@@ -1,6 +1,14 @@
 """Hardware-free checks for the target-following controller."""
 
+import sys
 import unittest
+from pathlib import Path
+
+# Add project root and src/ to sys.path
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+for p in (str(PROJECT_DIR), str(PROJECT_DIR / 'src')):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from follow_control import Box, FollowController
 from donkey_drive import CalibratedPWMDrive, load_pwm_settings, SteeringOnlyDrive
