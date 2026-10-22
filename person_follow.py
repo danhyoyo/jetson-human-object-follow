@@ -9,11 +9,13 @@ import sys
 import time
 from pathlib import Path
 
+PROJECT_DIR = Path(__file__).resolve().parent
+SRC_DIR = PROJECT_DIR / 'src'
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
 from follow_control import Box, FollowController
 from red_detector import detect_largest_red, draw_detection
-
-
-PROJECT_DIR = Path(__file__).resolve().parent
 
 
 def parse_args(argv=None):
@@ -23,7 +25,10 @@ def parse_args(argv=None):
     mode.add_argument('--drive', action='store_true', help='Enable steering and forward throttle')
     mode.add_argument('--steering-test', action='store_true',
                       help='Enable steering; keep throttle at neutral')
-    parser.add_argument('--donkey-dir', default=str(PROJECT_DIR / 'car'),
+    default_car_dir = (PROJECT_DIR / 'config' / 'car'
+                       if (PROJECT_DIR / 'config' / 'car').exists()
+                       else PROJECT_DIR / 'car')
+    parser.add_argument('--donkey-dir', default=str(default_car_dir),
                         help='Directory containing config.py/myconfig.py '
                              '(default: bundled car directory)')
     parser.add_argument('--invert-steering', action='store_true',

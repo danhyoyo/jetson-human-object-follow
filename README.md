@@ -13,7 +13,7 @@
 
 <br/>
 
-![Jetson Nano Human Follow Demo](output_fast.gif)
+![Jetson Nano Human Follow Demo](assets/output_fast.gif)
 
 *Autonomous person tracking running on Jetson Nano with real-time CSI camera inference and PCA9685 PWM actuator control.*
 
@@ -122,27 +122,46 @@ The JetCar connects to the PCA9685 16-channel 12-bit PWM servo driver via the Je
 
 ```text
 jetson-human-object-follow/
-├── person_follow.py         # Main runtime: CSI capture, TensorRT/color tracking, and control loop
-├── follow_control.py        # Hardware-independent proportional follow controller & state machine
-├── red_detector.py          # Fast NumPy connected-component detector for red targets
-├── donkey_drive.py          # Calibrated PCA9685 steering/throttle output & DriveGuard watchdog
-├── actuator_test.py         # Safe actuator diagnostic tool (dry-run by default)
-├── output_fast.gif          # Autonomous tracking demonstration animation
-├── requirements.txt         # PyPI Python dependencies
-├── setup_jetson.sh          # One-step automated deployment & verification script
-├── test_follow_control.py   # Unit tests for controller, red detector, and drive calibration
-├── test_actuator_test.py    # Unit tests for actuator PWM calculations
-├── jetson_myconfig.py       # Full baseline DonkeyCar configuration snapshot
-├── car/                     # Bundled minimal DonkeyCar runtime configuration
-│   ├── config.py            # Minimal DonkeyCar base config
-│   ├── myconfig.py          # Calibrated vehicle pins and PWM values
-│   └── README.md            # Notes on vehicle-specific calibration
-└── models/                  # Bundled portable AI detection models
-    └── SSD-Mobilenet-v2/
-        ├── ssd_mobilenet_v2_coco.uff       # Portable 90-class UFF model (67.8 MB)
-        ├── ssd_coco_labels.txt             # MS-COCO class labels (person ID: 1)
-        ├── ssd_mobilenet_v2_coco.uff.sha256sum # Model SHA-256 verification hash
-        └── README.md                       # Model documentation & engine generation notes
+├── assets/                     # 🖼️ Media assets and demonstrations
+│   └── output_fast.gif         # Autonomous tracking demonstration animation
+│
+├── config/                     # ⚙️ Vehicle calibration & configuration profiles
+│   ├── car/                    # Active calibrated DonkeyCar profile
+│   │   ├── config.py           # Minimal base configuration
+│   │   ├── myconfig.py         # Hardware pins & calibrated PWM intervals
+│   │   └── README.md           # Notes on vehicle-specific calibration
+│   └── jetson_myconfig.py      # Baseline DonkeyCar full template snapshot
+│
+├── models/                     # 🧠 AI detection models & portable assets
+│   └── SSD-Mobilenet-v2/
+│       ├── ssd_mobilenet_v2_coco.uff       # Portable 90-class UFF model (67.8 MB)
+│       ├── ssd_coco_labels.txt             # MS-COCO class labels (person ID: 1)
+│       ├── ssd_mobilenet_v2_coco.uff.sha256sum # Model SHA-256 verification hash
+│       └── README.md                       # Model documentation & engine generation notes
+│
+├── scripts/                    # 📜 Deployment and automation shell scripts
+│   └── setup_jetson.sh         # One-step automated deployment & verification script
+│
+├── src/                        # 💻 Core application and vehicle control logic
+│   ├── __init__.py             # Python package marker
+│   ├── follow_control.py       # Hardware-independent proportional follow controller & state machine
+│   ├── red_detector.py         # Fast NumPy connected-component detector for red targets
+│   └── donkey_drive.py         # Calibrated PCA9685 steering/throttle output & DriveGuard watchdog
+│
+├── tests/                      # 🧪 Automated hardware-free test suite
+│   ├── __init__.py             # Test package marker
+│   ├── test_follow_control.py  # Unit tests for controller, red detector, and drive calibration
+│   └── test_actuator_test.py   # Unit tests for actuator PWM calculations
+│
+├── tools/                      # 🛠️ Hardware diagnostic and bench utilities
+│   └── actuator_test.py        # Safe actuator diagnostic tool (dry-run by default)
+│
+├── person_follow.py            # 🚀 Main entrypoint: CSI capture, inference, and control loop
+├── actuator_test.py            # 🔗 Convenience root wrapper forwarding to tools/actuator_test.py
+├── setup_jetson.sh             # 🔗 Convenience root wrapper forwarding to scripts/setup_jetson.sh
+├── requirements.txt            # PyPI Python dependencies
+├── README.md                   # Comprehensive project documentation
+└── .gitignore                  # Git untracked patterns
 ```
 
 ---
@@ -264,8 +283,8 @@ python3 actuator_test.py --apply --duration 1 throttle --speed 0.05
 All algorithms can be verified on any machine without Jetson hardware:
 
 ```bash
-# Run all 20 unit tests with verbose output
-python3 -m unittest -v test_follow_control.py test_actuator_test.py
+# Run all 20 unit tests with automated test discovery
+python3 -m unittest discover -s tests -v
 ```
 
 ### Test Coverage Highlights:
@@ -295,7 +314,7 @@ python3 -m unittest -v test_follow_control.py test_actuator_test.py
 | `--headless` | `False` | Flag | Disable HDMI GUI preview window (useful for background runs). |
 | `--output` | `display://0` | URI | Video preview output URI. |
 | `--max-frame-age`| `0.75` | `> 0.0` (sec) | Maximum allowed frame delay before watchdog triggers emergency stop. |
-| `--donkey-dir` | `car/` | Directory path | Path to directory containing `config.py` and `myconfig.py`. |
+| `--donkey-dir` | `config/car/` | Directory path | Path to directory containing `config.py` and `myconfig.py`. |
 
 ---
 
